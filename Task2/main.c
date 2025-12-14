@@ -4,7 +4,7 @@
 #define SYS_WRITE 4
 #define SYS_OPEN 5
 #define SYS_CLOSE 6
-#define SYS_GETDENTS 141
+#define SYS_GETDENTS64 220
 
 #define STDOUT 1
 #define STDERR 2
@@ -12,12 +12,13 @@
 #define O_RDONLY 0
 #define BUF_SIZE 8192
 
-/* Linux dirent structure for getdents */
-struct linux_dirent {
-    unsigned long  d_ino;
-    unsigned long  d_off;
-    unsigned short d_reclen;
-    char           d_name[];
+/* Linux dirent64 structure for getdents64 */
+struct linux_dirent64 {
+    unsigned long long d_ino;
+    unsigned long long d_off;
+    unsigned short     d_reclen;
+    unsigned char      d_type;
+    char               d_name[];
 };
 
 extern int system_call();
@@ -39,7 +40,7 @@ int starts_with(const char* filename, const char* prefix) {
 int main(int argc, char* argv[], char* envp[]) {
     char buf[BUF_SIZE];
     int fd, nread, bpos;
-    struct linux_dirent *d;
+    struct linux_dirent64 *d;
     char* prefix = 0;
     int attach_virus = 0;
     int i;
@@ -59,7 +60,7 @@ int main(int argc, char* argv[], char* envp[]) {
     }
     
     /* Get directory entries */
-    nread = system_call(SYS_GETDENTS, fd, buf, BUF_SIZE);
+    nread = system_call(SYS_GETDENTS64, fd, buf, BUF_SIZE);
     if (nread < 0) {
         system_call(SYS_CLOSE, fd);
         system_call(SYS_EXIT, 0x55);
@@ -67,7 +68,7 @@ int main(int argc, char* argv[], char* envp[]) {
     
     /* Process directory entries */
     for (bpos = 0; bpos < nread;) {
-        d = (struct linux_dirent *) (buf + bpos);
+        d = (struct linux_dirent64 *) (buf + bpos);
         
         /* If no prefix specified, print all files */
         if (prefix == 0) {
