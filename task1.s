@@ -41,16 +41,19 @@ extern strlen
 main:
     push ebp
     mov ebp, esp
+    sub esp, 4                   ; Local variable space
     
     ; Save arguments
-    mov ecx, [ebp+8]             ; argc
+    mov eax, [ebp+8]             ; argc
+    mov [ebp-4], eax             ; Save argc on stack
     mov esi, [ebp+12]            ; argv
     
     ; Task 1.A: Print all arguments to stdout
     xor edi, edi                 ; i = 0
     
 .print_args_loop:
-    cmp edi, ecx                 ; if (i >= argc)
+    mov eax, [ebp-4]             ; Load argc
+    cmp edi, eax                 ; if (i >= argc)
     jge .parse_args              ; done printing
     
     ; Get argv[i]
@@ -81,10 +84,10 @@ main:
 .parse_args:
     ; Parse command line arguments for -i and -o
     mov edi, 1                   ; start from argv[1] (skip program name)
-    mov ecx, [ebp+8]             ; argc
     
 .arg_loop:
-    cmp edi, ecx
+    mov eax, [ebp-4]             ; Load argc
+    cmp edi, eax
     jge .encode                  ; done parsing arguments
     
     mov eax, [esi + edi*4]       ; get argv[i]
@@ -232,6 +235,7 @@ main:
     int 0x80
     
     ; Return 0 (shouldn't reach here)
+    add esp, 4                   ; Clean up local variable
     pop ebp
     xor eax, eax
     ret
